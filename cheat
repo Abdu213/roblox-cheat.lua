@@ -1,0 +1,56 @@
+-- Define the crosshair model
+local crosshairModel = game:GetService("InsertService"):LoadAsset("rbxassetid://123456789") -- Replace with the actual asset ID of your crosshair model
+
+-- Function to place a crosshair on an enemy's head
+local function placeCrosshair(player)
+    local crosshair = crosshairModel:Clone()
+    crosshair.Parent = game.Workspace
+    crosshair.Position = player.Character.Head.Position
+    crosshair.Name = "Crosshair_" .. player.Name
+
+    -- Remove the crosshair when the player leaves the game or gets too far away
+    local connection = player.CharacterAdded:Connect(function()
+        local character = player.Character
+        if character then
+            local head = character:WaitForChild("Head")
+            if head then
+                local distance = (game.Players.LocalPlayer.Character.Head.Position - head.Position).Magnitude
+                if distance > 10 then
+                    crosshair:Destroy()
+                    connection:Disconnect()
+                end
+            end
+        end
+    end)
+end
+
+-- Function to detect nearby enemies
+local function detectNearbyEnemies()
+    local player = game.Players.LocalPlayer
+    local nearbyEnemies = {}
+
+    for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
+        if otherPlayer.Name ~= player.Name then
+            local character = otherPlayer.Character
+            if character then
+                local distance = (player.Character.Head.Position - character.Head.Position).Magnitude
+                if distance < 10 then
+                    nearbyEnemies[otherPlayer] = true
+                end
+            end
+        end
+    end
+
+    return nearbyEnemies
+end
+
+-- Main loop
+while true do
+    local nearbyEnemies = detectNearbyEnemies()
+
+    for player, _ in pairs(nearbyEnemies) do
+        placeCrosshair(player)
+    end
+
+    wait(1)
+end
